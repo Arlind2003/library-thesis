@@ -7,8 +7,7 @@ public class Category
 {
     [Key]
     [ForeignKey(nameof(Searchable))]
-    public long Id { get; set; }
-    
+    public long Id { get; set; }   
     public Searchable? Searchable { get; set; }
     public required string Name { get; set; }
 }
