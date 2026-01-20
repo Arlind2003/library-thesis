@@ -1,0 +1,90 @@
+# --- .NET build artifacts ---
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Ll]ogs/
+*.log
+
+# --- VS Code workspace (keep common shared files) ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# --- Visual Studio / Rider (in case contributors use them) ---
+.vs/
+.idea/
+*.sln.iml
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# --- NuGet ---
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# --- ReSharper ---
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# --- Test results / coverage ---
+TestResult*
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage-reports/
+*.opencover.xml
+
+# --- Publish / output dirs ---
+publish/
+out/
+dist/
+Files/*
+
+# --- Environment / secrets ---
+.env
+.env.*
+secrets.json
+
+# --- App settings with local secrets (adjust if you commit these) ---
+appsettings.*.Local.json
+appsettings.*.Private.json
+appsettings.*.Secrets.json
+# Note: appsettings.Development.json is commonly ignored if it has secrets.
+# Remove the next line if you want to keep it in git.
+appsettings.Development.json
+
+# --- Local databases ---
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# --- Misc temp files ---
+*.pid
+*.seed
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig.git-credentials
+.git-credentials
