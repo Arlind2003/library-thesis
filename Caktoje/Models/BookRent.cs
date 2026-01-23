@@ -15,5 +15,8 @@ public class BookRent
     [ForeignKey(nameof(BookStock))]
     public required long BookStockId { get; set; }
     public BookStock? BookStock { get; set; }
+
+    [ForeignKey(nameof(Renter))]
     public required string RenterId { get; set; }
+    public User? Renter { get; set; }
 }

@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Serilog;
 using Caktoje.Models;
+using Caktoje.Services;
+using Caktoje.Services.Admin;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var envPath = Path.Combine(builder.Environment.ContentRootPath, ".env");
-if (File.Exists(envPath))
+if (System.IO.File.Exists(envPath))
 {
     Env.Load(envPath);
 }else
@@ -19,6 +21,15 @@ if (File.Exists(envPath))
 
 builder.Configuration.AddEnvironmentVariables();
 
+builder.Services.AddScoped<StorageService>();
+builder.Services.AddScoped<AuthorAdminService>();
+builder.Services.AddScoped<CategoryAdminService>();
+builder.Services.AddScoped<BookAdminService>();
+builder.Services.AddScoped<BookStockAdminService>();
+builder.Services.AddScoped<BookRentAdminService>();
+builder.Services.AddScoped<DayClosedAdminService>();
+builder.Services.AddScoped<PutwallAdminService>();
+builder.Services.AddScoped<PutwallSectionAdminService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
