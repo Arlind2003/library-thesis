@@ -7,6 +7,9 @@ using Serilog;
 using Caktoje.Models;
 using Caktoje.Services;
 using Caktoje.Services.Admin;
+using Caktoje.Data;
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,8 @@ if (System.IO.File.Exists(envPath))
 {
     throw new CriticalConfigurationException(".env file is missing.");
 }
+builder.Services.AddDbContext<CaktojeDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -30,12 +35,7 @@ builder.Services.AddScoped<BookRentAdminService>();
 builder.Services.AddScoped<DayClosedAdminService>();
 builder.Services.AddScoped<PutwallAdminService>();
 builder.Services.AddScoped<PutwallSectionAdminService>();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-
-Console.WriteLine($"Using connection string: {connectionString}");
+builder.Services.AddScoped<UserAdminService>();
 
 builder.Services.AddAuthorization();
 
@@ -48,13 +48,19 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
-//builder.Services.AddIdentityApiEndpoints<User>().AddEntityFrameworkStores<KeybeeDbContext>();
-    
+builder.Services.AddIdentityApiEndpoints<User>((options)=>{
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedAccount = false;
+})
+    .AddRoles<Role>()
+    .AddEntityFrameworkStores<CaktojeDbContext>();
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;
@@ -66,29 +72,25 @@ builder.Host.UseSerilog((context, config) =>
 {
     config
         .ReadFrom.Configuration(context.Configuration)
-        .Enrich.FromLogContext();
+        .Enrich.FromLogContext()
+        .WriteTo.Console(); 
 });
-
+builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// app.MapGroup("/twilio").ValidateTwilioRequest();
-
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 using (var scope = app.Services.CreateScope())
-{
-    // var db = scope.ServiceProvider.GetRequiredService<CaktojeDb>();
-    // var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    
-    // await db.Database.EnsureCreatedAsync();
-
-    // await Seeder.SeedAdminUserAsync(scope.ServiceProvider);
+{   
+    await Seeder.Seed(scope.ServiceProvider);
     // await Seeder.SeedBasicDataAsync(scope.ServiceProvider);
 }
 
-var filePath = Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["Files:MessageAttachmentsPath"] ?? throw new CriticalConfigurationException("MessageAttachmentsPath is not configured in Files section"));
+var filePath = Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["Files:ImagesPath"] ?? throw new CriticalConfigurationException("Images is not configured in Files section"));
+
+Console.WriteLine($"Serving static files from: {filePath}");
 
 if (!Directory.Exists(filePath))
 {
@@ -99,15 +101,15 @@ if (!Directory.Exists(filePath))
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(filePath),
-    RequestPath = builder.Configuration["Files:MessageAttachmentsRelativeUrl"] ?? throw new CriticalConfigurationException("MessageAttachmentsRelativeUrl is not configured in Files section")
+    RequestPath = $"/{builder.Configuration["Files:ImagesPath"]}" ?? throw new CriticalConfigurationException("ImagesPath is not configured in Files section")
 });
 
-app.UseSwagger();
-app.UseSwaggerUI();
+
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseHttpsRedirection();
 
-//alllow any origin for testing purposes
 app.UseCors(policy => policy
     .AllowAnyOrigin()
     .AllowAnyMethod()
@@ -115,7 +117,6 @@ app.UseCors(policy => policy
 
 app.UseAuthentication();
 app.MapControllers();
-app.UseAuthorization();
 
 app.MapIdentityApi<User>().AddEndpointFilter(async (context, next) =>
    {

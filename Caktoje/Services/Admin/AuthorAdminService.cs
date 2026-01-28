@@ -25,7 +25,7 @@ public class AuthorAdminService
 
         if (!string.IsNullOrEmpty(query))
         {
-            authorsQuery = authorsQuery.Where(a => a.Name.Contains(query));
+            authorsQuery = authorsQuery.Where(a => a.FullName.Contains(query));
         }
 
         var totalItems = await authorsQuery.CountAsync();
@@ -39,7 +39,7 @@ public class AuthorAdminService
                 Id = a.Id,
                 Name = a.FullName,
                 Biography = a.Biography,
-                Image = new FileResource { FileName = a.Image.FileName }
+                Image = new FileResource { FileName = a.Searchable!.File!.FileName }
             })
             .ToListAsync();
 
@@ -59,20 +59,33 @@ public class AuthorAdminService
                 Id = a.Id,
                 Name = a.FullName,
                 Biography = a.Biography,
-                Image = new FileResource { FileName = a.Image.FileName }
+                Image = new FileResource { FileName = a.Searchable!.File!.FileName }
             })
             .FirstOrDefaultAsync();
     }
 
     public async Task<AuthorResource> CreateAuthor(AuthorBinding authorBinding)
     {
-        var imageName = authorBinding.Image != null ? await _storageService.SaveImage(authorBinding.Image) : null;
-        
+        var image = authorBinding.Image != null ? await _storageService.SaveImage(authorBinding.Image) : null;
+
+        Models.File? file = image != null ? new Models.File { FileName = image.FileName, RelativeDirectory = image.Directory } : null;
+
+        if(file != null){
+            _context.Files.Add(file);
+            await _context.SaveChangesAsync();
+        }else {
+            file = _context.Files.FirstOrDefault(f => f.FileName == "default-author.png") ?? throw new Exception("Default author image not found.");
+        }
+
         var author = new Author
         {
             FullName = authorBinding.FullName,
             Biography = authorBinding.Biography,
-            Image = imageName != null ? new Models.File { FileName = imageName, RelativeDirectory } : null
+            Searchable = new Searchable(){
+                FileId = file.Id,
+                Type = Constants.Enums.SearchableType.Author,
+                Name = authorBinding.FullName
+            }
         };
 
         _context.Authors.Add(author);
@@ -81,33 +94,33 @@ public class AuthorAdminService
         return new AuthorResource
         {
             Id = author.Id,
-            Name = author.Name,
+            Name = author.FullName,
             Biography = author.Biography,
-            Image = new FileResource { FileName = author.Image?.FileName }
+            Image = new FileResource { FileName = author.Searchable!.File!.FileName }
         };
     }
 
     public async Task<AuthorResource?> UpdateAuthor(long id, AuthorBinding authorBinding)
     {
-        var author = await _context.Authors.Include(a => a.Image).FirstOrDefaultAsync(a => a.Id == id);
+        var author = await _context.Authors.Include(a => a.Searchable).ThenInclude(s => s!.File).FirstOrDefaultAsync(a => a.Id == id);
         if (author == null)
         {
             return null;
         }
 
-        author.Name = authorBinding.FullName;
+        author.FullName = authorBinding.FullName;
         author.Biography = authorBinding.Biography;
 
         if (authorBinding.Image != null)
         {
-            var imageName = await _storageService.SaveImage(authorBinding.Image);
-            if (author.Image != null)
+            var image = await _storageService.SaveImage(authorBinding.Image);
+            if (author.Searchable!.File != null)
             {
-                author.Image.FileName = imageName;
+                author.Searchable.File.FileName = image.FileName;
             }
             else
             {
-                author.Image = new Models.File { FileName = imageName };
+                author.Searchable.File = new Models.File { FileName = image.FileName, RelativeDirectory = image.Directory };
             }
         }
 
@@ -116,9 +129,9 @@ public class AuthorAdminService
         return new AuthorResource
         {
             Id = author.Id,
-            Name = author.Name,
+            Name = author.FullName,
             Biography = author.Biography,
-            Image = new FileResource { FileName = author.Image?.FileName }
+            Image = new FileResource { FileName = author.Searchable!.File!.FileName }
         };
     }
 

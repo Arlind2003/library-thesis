@@ -25,17 +25,17 @@ public class BookAdminService
 
         if (categoryIds != null && categoryIds.Any())
         {
-            booksQuery = booksQuery.Where(b => b.BookCategories.Any(bc => categoryIds.Contains(bc.CategoryId)));
+            booksQuery = booksQuery.Where(b => b.Categories.Any(bc => categoryIds.Contains(bc.CategoryId)));
         }
 
         if (!string.IsNullOrEmpty(query))
         {
-            booksQuery = booksQuery.Where(b => b.Name.Contains(query) || b.Description.Contains(query));
+            booksQuery = booksQuery.Where(b => b.Name.Contains(query) || (b.Description != null && b.Description.Contains(query)));
         }
 
         if (authorIds != null && authorIds.Any())
         {
-            booksQuery = booksQuery.Where(b => b.BookAuthors.Any(ba => authorIds.Contains(ba.AuthorId)));
+            booksQuery = booksQuery.Where(b => b.Authors.Any(ba => authorIds.Contains(ba.AuthorId)));
         }
 
         var totalItems = await booksQuery.CountAsync();
@@ -44,14 +44,17 @@ public class BookAdminService
         var books = await booksQuery
             .Include(b => b.BookStocks)
                 .ThenInclude(bs => bs.PutwallSection)
-                    .ThenInclude(ps => ps.Putwall)
-            .Include(b => b.BookAuthors)
+                    .ThenInclude(ps => ps!.Putwall)
+            .Include(b => b.Authors)
                 .ThenInclude(ba => ba.Author)
-                    .ThenInclude(a => a.Image)
-            .Include(b => b.BookCategories)
+                    .ThenInclude(a => a!.Searchable)
+                        .ThenInclude(s => s!.File)
+            .Include(b => b.Categories)
                 .ThenInclude(bc => bc.Category)
-                    .ThenInclude(c => c.Image)
-            .Include(b => b.Image)
+                    .ThenInclude(c => c!.Searchable)
+                        .ThenInclude(s => s!.File)
+            .Include(b => b.Searchable)
+                .ThenInclude(s => s!.File)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(b => new BookResource
@@ -59,27 +62,27 @@ public class BookAdminService
                 Id = b.Id,
                 Name = b.Name,
                 Description = b.Description,
-                Image = new FileResource { FileName = b.Image.FileName },
+                Image = new FileResource { FileName = b.Searchable!.File!.FileName },
                 BookStocks = b.BookStocks.Select(bs => new BookStockResource
                 {
                     Id = bs.Id,
-                    Putwall = bs.PutwallSection.Putwall.Name,
+                    Putwall = bs.PutwallSection!.Putwall!.Name,
                     Row = bs.PutwallSection.Row,
                     Column = bs.PutwallSection.Column,
                     Book = null
                 }).ToList(),
-                Authors = b.BookAuthors.Select(ba => new AuthorResource
+                Authors = b.Authors.Select(ba => new AuthorResource
                 {
-                    Id = ba.Author.Id,
-                    Name = ba.Author.Name,
-                    Biography = ba.Author.Biography,
-                    Image = new FileResource { FileName = ba.Author.Image.FileName }
+                    Id = ba.Author!.Id,
+                    Name = ba.Author!.FullName,
+                    Biography = ba.Author!.Biography,
+                    Image = new FileResource { FileName = ba.Author!.Searchable!.File!.FileName }
                 }).ToList(),
-                Categories = b.BookCategories.Select(bc => new CategoryResource
+                Categories = b.Categories.Select(bc => new CategoryResource
                 {
-                    Id = bc.Category.Id,
-                    Name = bc.Category.Name,
-                    Image = new FileResource { FileName = bc.Category.Image.FileName }
+                    Id = bc.Category!.Id,
+                    Name = bc.Category!.Name,
+                    Image = new FileResource { FileName = bc.Category!.Searchable!.File!.FileName }
                 }).ToList()
             })
             .ToListAsync();
@@ -97,40 +100,43 @@ public class BookAdminService
             .Where(b => b.Id == id)
             .Include(b => b.BookStocks)
                 .ThenInclude(bs => bs.PutwallSection)
-                    .ThenInclude(ps => ps.Putwall)
-            .Include(b => b.BookAuthors)
+                    .ThenInclude(ps => ps!.Putwall)
+            .Include(b => b.Authors)
                 .ThenInclude(ba => ba.Author)
-                    .ThenInclude(a => a.Image)
-            .Include(b => b.BookCategories)
+                    .ThenInclude(a => a!.Searchable)
+                        .ThenInclude(s => s!.File)
+            .Include(b => b.Categories)
                 .ThenInclude(bc => bc.Category)
-                    .ThenInclude(c => c.Image)
-            .Include(b => b.Image)
+                    .ThenInclude(c => c!.Searchable)
+                        .ThenInclude(s => s!.File)
+            .Include(b => b.Searchable)
+                .ThenInclude(s => s!.File)
             .Select(b => new BookResource
             {
                 Id = b.Id,
                 Name = b.Name,
                 Description = b.Description,
-                Image = new FileResource { FileName = b.Image.FileName },
+                Image = new FileResource { FileName = b.Searchable!.File!.FileName },
                 BookStocks = b.BookStocks.Select(bs => new BookStockResource
                 {
                     Id = bs.Id,
-                    Putwall = bs.PutwallSection.Putwall.Name,
+                    Putwall = bs.PutwallSection!.Putwall!.Name,
                     Row = bs.PutwallSection.Row,
                     Column = bs.PutwallSection.Column,
                     Book = null
                 }).ToList(),
-                Authors = b.BookAuthors.Select(ba => new AuthorResource
+                Authors = b.Authors.Select(ba => new AuthorResource
                 {
-                    Id = ba.Author.Id,
-                    Name = ba.Author.Name,
-                    Biography = ba.Author.Biography,
-                    Image = new FileResource { FileName = ba.Author.Image.FileName }
+                    Id = ba.Author!.Id,
+                    Name = ba.Author!.FullName,
+                    Biography = ba.Author!.Biography,
+                    Image = new FileResource { FileName = ba.Author!.Searchable!.File!.FileName }
                 }).ToList(),
-                Categories = b.BookCategories.Select(bc => new CategoryResource
+                Categories = b.Categories.Select(bc => new CategoryResource
                 {
-                    Id = bc.Category.Id,
-                    Name = bc.Category.Name,
-                    Image = new FileResource { FileName = bc.Category.Image.FileName }
+                    Id = bc.Category!.Id,
+                    Name = bc.Category!.Name,
+                    Image = new FileResource { FileName = bc.Category!.Searchable!.File!.FileName }
                 }).ToList()
             })
             .FirstOrDefaultAsync();
@@ -138,14 +144,30 @@ public class BookAdminService
 
     public async Task<BookResource> CreateBook(BookBinding bookBinding)
     {
-        var imageName = bookBinding.Image != null ? await _storageService.SaveImage(bookBinding.Image) : null;
+        var image = bookBinding.Image != null ? await _storageService.SaveImage(bookBinding.Image) : null;
+
+        Models.File? file = image != null ? new Models.File { FileName = image.FileName, RelativeDirectory = image.Directory } : null;
+
+        if(file != null){
+            _context.Files.Add(file);
+            await _context.SaveChangesAsync();
+        }else {
+            file = _context.Files.FirstOrDefault(f => f.FileName == "default-book.png") ?? throw new Exception("Default book image not found.");
+        }
 
         var book = new Book
         {
             Name = bookBinding.Name,
             Description = bookBinding.Description,
             ISBN = bookBinding.ISBN,
-            Image = imageName != null ? new Models.File { FileName = imageName } : null
+            Categories = [],
+            Authors = [],
+            BookStocks = [],
+            Searchable = new(){
+                Name = bookBinding.Name,
+                FileId = file.Id,
+                Type = Constants.Enums.SearchableType.Book,
+            }
         };
 
         _context.Books.Add(book);
@@ -169,9 +191,9 @@ public class BookAdminService
     public async Task<BookResource?> UpdateBook(long id, BookBinding bookBinding)
     {
         var book = await _context.Books
-            .Include(b => b.BookAuthors)
-            .Include(b => b.BookCategories)
-            .Include(b => b.Image)
+            .Include(b => b.Authors)
+            .Include(b => b.Categories)
+            .Include(b => b.Searchable).ThenInclude(s => s!.File)
             .FirstOrDefaultAsync(b => b.Id == id);
 
         if (book == null)
@@ -185,28 +207,24 @@ public class BookAdminService
 
         if (bookBinding.Image != null)
         {
-            var imageName = await _storageService.SaveImage(bookBinding.Image);
-            if (book.Image != null)
+            var image = await _storageService.SaveImage(bookBinding.Image);
+            if (book.Searchable!.File != null)
             {
-                book.Image.FileName = imageName;
+                book.Searchable.File.FileName = image.FileName;
             }
             else
             {
-                book.Image = new Models.File { FileName = imageName };
+                book.Searchable.File = new Models.File { FileName = image.FileName, RelativeDirectory = image.Directory };
             }
         }
 
-        book.BookAuthors.Clear();
-        foreach (var authorId in bookBinding.AuthorIds)
-        {
-            book.BookAuthors.Add(new BookAuthor { AuthorId = authorId });
-        }
+        await _context.BookAuthors.Where(ba => ba.BookId == book.Id).ExecuteDeleteAsync();
+        var bookAuthors = bookBinding.AuthorIds.Select(a => new BookAuthor { BookId = book.Id, AuthorId = a });
+        await _context.BookAuthors.AddRangeAsync(bookAuthors);
 
-        book.BookCategories.Clear();
-        foreach (var categoryId in bookBinding.CategoryIds)
-        {
-            book.BookCategories.Add(new BookCategory { CategoryId = categoryId });
-        }
+        await _context.BookCategories.Where(bc => bc.BookId == book.Id).ExecuteDeleteAsync();
+        var bookCategories = bookBinding.CategoryIds.Select(c => new BookCategory { BookId = book.Id, CategoryId = c });
+        await _context.BookCategories.AddRangeAsync(bookCategories);
 
         await _context.SaveChangesAsync();
 

@@ -32,7 +32,7 @@ public class BookStockAdminService
 
         if (!string.IsNullOrEmpty(query))
         {
-            bookStocksQuery = bookStocksQuery.Where(bs => bs.Book.Name.Contains(query));
+            bookStocksQuery = bookStocksQuery.Where(bs => bs.Book!.Name.Contains(query));
         }
 
         var totalItems = await bookStocksQuery.CountAsync();
@@ -40,26 +40,27 @@ public class BookStockAdminService
 
         var bookStocks = await bookStocksQuery
             .Include(bs => bs.Book)
-                .ThenInclude(b => b.Image)
+                .ThenInclude(b => b!.Authors)
+                    .ThenInclude(ba => ba.Author)
             .Include(bs => bs.PutwallSection)
-                .ThenInclude(ps => ps.Putwall)
+                .ThenInclude(ps => ps!.Putwall)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(bs => new BookStockResource
             {
                 Id = bs.Id,
-                Putwall = bs.PutwallSection.Putwall.Name,
+                Putwall = bs.PutwallSection!.Putwall!.Name,
                 Row = bs.PutwallSection.Row,
                 Column = bs.PutwallSection.Column,
                 Book = new BookResource
                 {
-                    Id = bs.Book.Id,
+                    Id = bs.Book!.Id,
                     Name = bs.Book.Name,
                     Description = bs.Book.Description,
-                    Image = new FileResource { FileName = bs.Book.Image.FileName },
-                    BookStocks = null,
-                    Authors = null,
-                    Categories = null
+                    Image = new FileResource { FileName = bs.Book.Searchable!.File!.FileName },
+                    BookStocks = new List<BookStockResource>(),
+                    Authors = new List<AuthorResource>(),
+                    Categories = new List<CategoryResource>()
                 }
             })
             .ToListAsync();
@@ -76,24 +77,25 @@ public class BookStockAdminService
         return await _context.BookStocks
             .Where(bs => bs.Id == id)
             .Include(bs => bs.Book)
-                .ThenInclude(b => b.Image)
+                .ThenInclude(b => b!.Searchable)
+                    .ThenInclude(s => s!.File)
             .Include(bs => bs.PutwallSection)
-                .ThenInclude(ps => ps.Putwall)
+                .ThenInclude(ps => ps!.Putwall)
             .Select(bs => new BookStockResource
             {
                 Id = bs.Id,
-                Putwall = bs.PutwallSection.Putwall.Name,
+                Putwall = bs.PutwallSection!.Putwall!.Name,
                 Row = bs.PutwallSection.Row,
                 Column = bs.PutwallSection.Column,
                 Book = new BookResource
                 {
-                    Id = bs.Book.Id,
+                    Id = bs.Book!.Id,
                     Name = bs.Book.Name,
                     Description = bs.Book.Description,
-                    Image = new FileResource { FileName = bs.Book.Image.FileName },
-                    BookStocks = null,
-                    Authors = null,
-                    Categories = null
+                    Image = new FileResource { FileName = bs.Book.Searchable!.File!.FileName },
+                    BookStocks = new List<BookStockResource>(),
+                    Authors = new List<AuthorResource>(),
+                    Categories = new List<CategoryResource>(),
                 }
             })
             .FirstOrDefaultAsync();
@@ -104,6 +106,7 @@ public class BookStockAdminService
         var bookStock = new BookStock
         {
             BookId = bookStockBinding.BookId,
+            State = Constants.Enums.BookStockStateEnum.InPlace,
             PutwallSectionId = bookStockBinding.PutwallSectionId
         };
 
