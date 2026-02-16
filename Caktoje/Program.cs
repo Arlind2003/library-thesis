@@ -97,6 +97,7 @@ if (!Directory.Exists(filePath))
     Directory.CreateDirectory(filePath);
 }
 
+app.UseCors();
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -109,11 +110,6 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 
 app.UseHttpsRedirection();
-
-app.UseCors(policy => policy
-    .AllowAnyOrigin()
-    .AllowAnyMethod()
-    .AllowAnyHeader());
 
 app.UseAuthentication();
 app.MapControllers();

@@ -1,4 +1,5 @@
 using Caktoje.Data;
+using Caktoje.Data.Bindings;
 using Caktoje.Data.Resources.Common;
 using Caktoje.Models;
 using Microsoft.EntityFrameworkCore;
@@ -31,5 +32,40 @@ public class DayClosedAdminService
             Items = daysClosed,
             TotalPages = totalPages
         };
+    }
+    public async Task<DayClosed?> CreateDayClosed(DayClosedBinding dayClosed)   
+    {
+        var result = await _context.DaysClosed.AddAsync(new DayClosed
+        {
+            Date = dayClosed.Date,
+            RecurringType = dayClosed.RecurringType
+        });
+        await _context.SaveChangesAsync();
+
+        return result.Entity;
+    }
+    public async Task DeleteDayClosed(long id)
+    {
+        var dayClosed = await _context.DaysClosed.FindAsync(id);
+        if (dayClosed != null)
+        {
+            _context.DaysClosed.Remove(dayClosed);
+            await _context.SaveChangesAsync();
+        }
+    }
+    public async Task<DayClosed?> UpdateDayClosed(long id, DayClosedBinding updatedDayClosed)
+    {
+        var dayClosed = await _context.DaysClosed.FindAsync(id);
+        if (dayClosed == null)
+        {
+            return null;
+        }
+
+        dayClosed.Date = updatedDayClosed.Date;
+        dayClosed.RecurringType = updatedDayClosed.RecurringType;
+
+        await _context.SaveChangesAsync();
+
+        return dayClosed;
     }
 }

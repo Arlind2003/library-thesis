@@ -1,3 +1,5 @@
+using Caktoje.Constants.Enums;
+using Caktoje.Data.Bindings;
 using Caktoje.Services.Admin;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,5 +21,31 @@ public class DayClosedAdminController : ControllerBase
     {
         var result = await _dayClosedAdminService.GetDaysClosed(page, pageSize);
         return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateDayClosed([FromBody] DayClosedBinding binding){
+        if(!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        var result = await _dayClosedAdminService.CreateDayClosed(binding);
+        return Ok(result);
+    }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateDayClosed(long id, [FromBody] DayClosedBinding binding)
+    {
+        if(!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        var result = await _dayClosedAdminService.UpdateDayClosed(id, binding);
+        return result == null ? NotFound() : Ok(result);
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteDayClosed(long id)
+    {
+        await _dayClosedAdminService.DeleteDayClosed(id);
+        return NoContent();
     }
 }

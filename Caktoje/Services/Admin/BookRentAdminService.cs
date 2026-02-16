@@ -74,6 +74,7 @@ public class BookRentAdminService
                     Putwall = br.BookStock.PutwallSection!.Putwall!.Name,
                     Row = br.BookStock.PutwallSection.Row,
                     Column = br.BookStock.PutwallSection.Column,
+                    State = br.BookStock.State,
                     Book = new BookResource
                     {
                         Id = br.BookStock.Book!.Id,
@@ -82,7 +83,8 @@ public class BookRentAdminService
                         Image = new FileResource { FileName = br.BookStock.Book.Searchable!.File!.FileName },
                         BookStocks = new List<BookStockResource>(),
                         Authors = new List<AuthorResource>(),
-                        Categories = new List<CategoryResource>()
+                        Categories = new List<CategoryResource>(),
+                        ISBN = br.BookStock.Book.ISBN
                     }
                 }
             })
@@ -108,6 +110,9 @@ public class BookRentAdminService
             throw new BadRequestException("Book stock is already rented.");
         }
         _context.BookRents.Add(bookRent);
+        var bookStock = await _context.BookStocks.FindAsync(bookRentBinding.BookStockId) ?? throw new NotFoundException("Book stock not found.");
+        bookStock.State = Constants.Enums.BookStockStateEnum.RentedOut;
+        _context.BookStocks.Update(bookStock);
         await _context.SaveChangesAsync();
 
         return await _context.BookRents
@@ -135,12 +140,14 @@ public class BookRentAdminService
                 BookStock = new BookStockResource
                 {
                     Id = br.BookStock!.Id,
+                    State = br.BookStock.State,
                     Putwall = br.BookStock.PutwallSection!.Putwall!.Name,
                     Row = br.BookStock.PutwallSection.Row,
                     Column = br.BookStock.PutwallSection.Column,
                     Book = new BookResource
                     {
                         Id = br.BookStock.Book!.Id,
+                        ISBN = br.BookStock.Book.ISBN,
                         Name = br.BookStock.Book.Name,
                         Description = br.BookStock.Book.Description,
                         Image = new FileResource { FileName = br.BookStock.Book.Searchable!.File!.FileName },
@@ -153,8 +160,9 @@ public class BookRentAdminService
             .FirstOrDefaultAsync();
     }
     public async Task ReturnBook(long id){
-        var bookRent = await _context.BookRents.FindAsync(id) ?? throw new NotFoundException("Book rent not found.");
+        var bookRent = await _context.BookRents.Include(br => br.BookStock).FirstOrDefaultAsync(br => br.Id == id) ?? throw new NotFoundException("Book rent not found.");
         bookRent.ReturnedDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        bookRent.BookStock!.State = Constants.Enums.BookStockStateEnum.InPlace;
         await _context.SaveChangesAsync();
     }
 }

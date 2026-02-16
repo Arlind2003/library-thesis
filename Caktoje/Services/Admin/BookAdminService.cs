@@ -30,7 +30,7 @@ public class BookAdminService
 
         if (!string.IsNullOrEmpty(query))
         {
-            booksQuery = booksQuery.Where(b => b.Name.Contains(query) || (b.Description != null && b.Description.Contains(query)));
+            booksQuery = booksQuery.Where(b => b.Name.ToLower().Contains(query.ToLower()) || (b.Description != null && b.Description.ToLower().Contains(query.ToLower())));
         }
 
         if (authorIds != null && authorIds.Any())
@@ -61,11 +61,13 @@ public class BookAdminService
             {
                 Id = b.Id,
                 Name = b.Name,
+                ISBN = b.ISBN,
                 Description = b.Description,
                 Image = new FileResource { FileName = b.Searchable!.File!.FileName },
                 BookStocks = b.BookStocks.Select(bs => new BookStockResource
                 {
                     Id = bs.Id,
+                    State = bs.State,
                     Putwall = bs.PutwallSection!.Putwall!.Name,
                     Row = bs.PutwallSection.Row,
                     Column = bs.PutwallSection.Column,
@@ -114,12 +116,14 @@ public class BookAdminService
             .Select(b => new BookResource
             {
                 Id = b.Id,
+                ISBN = b.ISBN,
                 Name = b.Name,
                 Description = b.Description,
                 Image = new FileResource { FileName = b.Searchable!.File!.FileName },
                 BookStocks = b.BookStocks.Select(bs => new BookStockResource
                 {
                     Id = bs.Id,
+                    State = bs.State,
                     Putwall = bs.PutwallSection!.Putwall!.Name,
                     Row = bs.PutwallSection.Row,
                     Column = bs.PutwallSection.Column,

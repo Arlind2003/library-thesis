@@ -16,5 +16,6 @@ public class BookStock
     [ForeignKey(nameof(PutwallSection))]
     public required long? PutwallSectionId { get; set; }
     public PutwallSection? PutwallSection { get; set; }
+    public List<BookRent> BookRents { get; set; } = [];
     public required BookStockStateEnum State { get; set; }
 }

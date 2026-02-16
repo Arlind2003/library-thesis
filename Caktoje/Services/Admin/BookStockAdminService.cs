@@ -49,12 +49,14 @@ public class BookStockAdminService
             .Select(bs => new BookStockResource
             {
                 Id = bs.Id,
+                State = bs.State,
                 Putwall = bs.PutwallSection!.Putwall!.Name,
                 Row = bs.PutwallSection.Row,
                 Column = bs.PutwallSection.Column,
                 Book = new BookResource
                 {
                     Id = bs.Book!.Id,
+                    ISBN = bs.Book.ISBN,
                     Name = bs.Book.Name,
                     Description = bs.Book.Description,
                     Image = new FileResource { FileName = bs.Book.Searchable!.File!.FileName },
@@ -87,9 +89,11 @@ public class BookStockAdminService
                 Putwall = bs.PutwallSection!.Putwall!.Name,
                 Row = bs.PutwallSection.Row,
                 Column = bs.PutwallSection.Column,
+                State = bs.State,
                 Book = new BookResource
                 {
                     Id = bs.Book!.Id,
+                    ISBN = bs.Book.ISBN,
                     Name = bs.Book.Name,
                     Description = bs.Book.Description,
                     Image = new FileResource { FileName = bs.Book.Searchable!.File!.FileName },
