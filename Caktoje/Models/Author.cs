@@ -10,5 +10,6 @@ public class Author
     public long Id { get; set; }
     public Searchable? Searchable { get; set; }
     public required string FullName { get; set; }
+    public string? ExternalId { get; set; }
     public required string? Biography { get; set; }
 }

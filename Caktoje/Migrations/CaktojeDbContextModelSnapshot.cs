@@ -30,6 +30,9 @@ namespace Caktoje.Migrations
                     b.Property<string>("Biography")
                         .HasColumnType("text");
 
+                    b.Property<string>("ExternalId")
+                        .HasColumnType("text");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -284,7 +287,7 @@ namespace Caktoje.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("FileId")
+                    b.Property<long?>("FileId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Name")
@@ -540,7 +543,7 @@ namespace Caktoje.Migrations
             modelBuilder.Entity("Caktoje.Models.BookRent", b =>
                 {
                     b.HasOne("Caktoje.Models.BookStock", "BookStock")
-                        .WithMany()
+                        .WithMany("BookRents")
                         .HasForeignKey("BookStockId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -599,9 +602,7 @@ namespace Caktoje.Migrations
                 {
                     b.HasOne("Caktoje.Models.File", "File")
                         .WithMany()
-                        .HasForeignKey("FileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("FileId");
 
                     b.Navigation("File");
                 });
@@ -668,6 +669,11 @@ namespace Caktoje.Migrations
                     b.Navigation("BookStocks");
 
                     b.Navigation("Categories");
+                });
+
+            modelBuilder.Entity("Caktoje.Models.BookStock", b =>
+                {
+                    b.Navigation("BookRents");
                 });
 
             modelBuilder.Entity("Caktoje.Models.Role", b =>

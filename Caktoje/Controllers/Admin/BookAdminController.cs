@@ -9,16 +9,25 @@ namespace Caktoje.Controllers.Admin;
 public class BookAdminController : ControllerBase
 {
     private readonly BookAdminService _bookAdminService;
+    private readonly OpenLibraryService _openLibraryService;
 
-    public BookAdminController(BookAdminService bookAdminService)
+    public BookAdminController(BookAdminService bookAdminService, OpenLibraryService openLibraryService)
     {
         _bookAdminService = bookAdminService;
+        _openLibraryService = openLibraryService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetBooks([FromQuery] List<long>? categoryIds, [FromQuery] string? query, [FromQuery] List<long>? authorIds, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var result = await _bookAdminService.GetBooks(categoryIds, query, authorIds, page, pageSize);
+        return Ok(result);
+    }
+
+    [HttpGet("autocomplete/{isbn}")]
+    public async Task<IActionResult> AutocompleteBooks(string isbn)
+    {
+        var result = await _openLibraryService.GetBookAutocompleteByIsbnAsync(isbn);
         return Ok(result);
     }
 

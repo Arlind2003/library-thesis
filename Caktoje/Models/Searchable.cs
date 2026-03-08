@@ -12,6 +12,6 @@ public class Searchable
     public required SearchableType Type { get; set; }
 
     [ForeignKey(nameof(File))]
-    public required long FileId { get; set; }
+    public required long? FileId { get; set; }
     public File? File { get; set; }
 }

@@ -26,7 +26,10 @@ builder.Services.AddDbContext<CaktojeDbContext>(options =>
 
 builder.Configuration.AddEnvironmentVariables();
 
+
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<StorageService>();
+builder.Services.AddScoped<OpenLibraryService>();
 builder.Services.AddScoped<AuthorAdminService>();
 builder.Services.AddScoped<CategoryAdminService>();
 builder.Services.AddScoped<BookAdminService>();

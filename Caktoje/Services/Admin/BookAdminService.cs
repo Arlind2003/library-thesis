@@ -19,6 +19,8 @@ public class BookAdminService
         _storageService = storageService;
     }
 
+    
+
     public async Task<PaginatedResource<BookResource>> GetBooks(List<long>? categoryIds, string? query, List<long>? authorIds, int page, int pageSize)
     {
         var booksQuery = _context.Books.AsQueryable();

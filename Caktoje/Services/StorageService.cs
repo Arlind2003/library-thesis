@@ -49,6 +49,25 @@ public class StorageService
 
         return new FileSaveResult(uniqueFileName, imageDirectory);
     }
+    public async Task<FileSaveResult> SaveFileByUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            throw new ArgumentException("URL is empty or null.");
+
+        var fileExtension = Path.GetExtension(url);
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        var imageDirectory = Path.Combine(Directory.GetCurrentDirectory(), _targetPath);
+
+        using var httpClient = new HttpClient();
+        using var response = await httpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync();
+        await SaveFile(stream, uniqueFileName, imageDirectory);
+
+        return new FileSaveResult(uniqueFileName, imageDirectory);
+    }
 }
 public class FileSaveResult
 {
